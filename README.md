@@ -7,6 +7,9 @@ Supported Platforms:
 Future Platform Supports: 
 - WatchOS
 - VisonOS
+- TV OS
+- Tesla Car App
+- Samsung Fridge
 
 gRaPhIc dEsIgN Is mY pAsSiOn
 
