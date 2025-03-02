@@ -16,6 +16,25 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
+function Item({complete=false,progressValue=0,category='',reading=''}) {
+  if (complete) {
+    return (
+      <ThemedView>
+        <Progress.Circle style={styles.progressCircle} showsText={true} size={200} thickness={10} progress={progressValue} textStyle={styles.textStyle}></Progress.Circle>
+        <ThemedText type='defaultSemiBold'>Estimated Time Until Completion: {Math.round((1-progressValue)*20)} minutes</ThemedText>
+      </ThemedView>
+    )
+  }
+  return (
+    <ThemedView>
+      <ThemedText>Test Complete!</ThemedText>
+      <ThemedText>Results Obtained from Test</ThemedText>
+      <ThemedText>Category: {category}</ThemedText>
+      <ThemedText>Reading: {reading} mg/mL of Lp-PLA2</ThemedText>
+    </ThemedView>
+  )
+}
+
 export default function TabTwoScreen() {
   return (
     <ParallaxScrollView
@@ -26,28 +45,21 @@ export default function TabTwoScreen() {
           style={styles.reactLogo}
         />
       }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
 
       {/* Start Button */}
       <ThemedView style={styles.buttonContainer}>
         <TouchableOpacity style={styles.connectButton} onPress={() => console.log('Start button pressed')}>
           <Text style={styles.buttonText}>Start</Text>
         </TouchableOpacity>
-      </ThemedView>
 
-      {/* Stop Button */}
-      <ThemedView style={styles.buttonContainer}>
         <TouchableOpacity style={styles.connectButton} onPress={() => console.log('Stop button pressed')}>
           <Text style={styles.buttonText}>Stop</Text>
         </TouchableOpacity>
       </ThemedView>
 
-      <Progress.Bar style={styles.progressBar} progress={0.5} animationType='decay' indeterminate={true}>
-      </Progress.Bar>
-
-      <ThemedText type='defaultSemiBold'>Estimated Time Until Completion: 30 minutes</ThemedText>
+      
+      <Item complete={true} progressValue={0.8}></Item>
+      <Item complete={false} progressValue={0.8} category='Low Risk' reading='90'></Item>
 
       
     </ParallaxScrollView>
@@ -64,20 +76,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row', // Stack buttons horizontally
     alignItems: 'center', // Center horizontally
     justifyContent: 'center', // Center vertically
-    marginTop: 16,
+    marginTop: 32,
+    paddingHorizontal: 1,
   },
   hbContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     paddingBottom: 150,
+    paddingRight: 32,
   },
   connectButton: {
     backgroundColor: '#007AFF',
-    paddingVertical: 40,
-    paddingHorizontal: 100,
+    paddingVertical: 30,
+    paddingHorizontal: 40,
     borderRadius: 12,
+    marginHorizontal: 10,
   },
   buttonText: {
     color: '#fff',
@@ -132,7 +147,18 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   progressBar: {
-    width: 1000,
-    height: 170,
-  }
+    width: null,
+    height: 6,
+  },
+  progressCircle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textStyle: {
+    fontSize: 50,   // Adjust the font size
+    fontWeight: 'bold', // Optional: make text bold
+    color: '#333',  // Change text color if needed
+    textAlign: 'center',  // Center the text horizontally
+    lineHeight: 50,  // Adjust this to center vertically
+  },
 });
