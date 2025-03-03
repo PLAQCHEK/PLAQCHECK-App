@@ -6,6 +6,7 @@ import {
   View, 
   Text 
 } from 'react-native';
+import useBLE from '@/hooks/useBLE';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -14,6 +15,32 @@ import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
   const [showTips, setShowTips] = useState(false);
+  const {
+    allDevices,
+    connectedDevice,
+    connectToDevice,
+    color,
+    requestPermissions,
+    scanForPeripherals,
+  } = useBLE();
+
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  const scanForDevices = async () => {
+    const isPermissionsEnabled = await requestPermissions();
+    if (isPermissionsEnabled) {
+      scanForPeripherals();
+    }
+  };
+
+  const hideModal = () => {
+    setIsModalVisible(false);
+  };
+
+  const openModal = async () => {
+    scanForDevices();
+    setIsModalVisible(true);
+  };
 
   return (
     <ParallaxScrollView
@@ -32,7 +59,7 @@ export default function HomeScreen() {
 
       {/* Connect Button */}
       <ThemedView style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.connectButton} onPress={() => console.log('Connect button pressed')}>
+        <TouchableOpacity style={styles.connectButton} onPress={() => {openModal()}}>
           <Text style={styles.buttonText}>Connect</Text>
         </TouchableOpacity>
       </ThemedView>
