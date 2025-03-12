@@ -1,51 +1,53 @@
+import React, { useState } from 'react';
 import { 
   Image, 
   StyleSheet, 
   TouchableOpacity, 
   View, 
-  Text,
-  Platform 
+  Text 
 } from 'react-native';
 
 import * as Progress from 'react-native-progress'
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
+import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 
 function Item({complete=false,progressValue=0,category='',reading=''}) {
   if (complete) {
     return (
       <ThemedView>
-        <Progress.Circle style={styles.progressCircle} showsText={true} size={200} thickness={10} progress={progressValue} textStyle={styles.textStyle}></Progress.Circle>
+        <ThemedText>Test Complete!</ThemedText>
+        <ThemedText>Results Obtained from Test</ThemedText>
+        <ThemedText>Category: {category}</ThemedText>
+        <ThemedText>Reading: {reading} mg/mL of Lp-PLA2</ThemedText>
+      </ThemedView>
+    )
+  }
+  else {
+    return (
+      <ThemedView>
+         <Progress.Bar progress={progressValue} width={300} height={40} color={"green"}/>
         <ThemedText type='defaultSemiBold'>Estimated Time Until Completion: {Math.round((1-progressValue)*20)} minutes</ThemedText>
       </ThemedView>
     )
   }
-  return (
-    <ThemedView>
-      <ThemedText>Test Complete!</ThemedText>
-      <ThemedText>Results Obtained from Test</ThemedText>
-      <ThemedText>Category: {category}</ThemedText>
-      <ThemedText>Reading: {reading} mg/mL of Lp-PLA2</ThemedText>
-    </ThemedView>
-  )
 }
 
-export default function TabTwoScreen() {
+
+export default function Results() {
+  const [showTips, setShowTips] = useState(false);
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerBackgroundColor={{ light: '#9fb0b5', dark: '#1D3D47' }}
       headerImage={
         <Image
           source={require('@/assets/images/justlogo.png')}
           style={styles.reactLogo}
         />
       }>
-
+      
       {/* Start Button */}
       <ThemedView style={styles.buttonContainer}>
         <TouchableOpacity style={styles.connectButton} onPress={() => console.log('Start button pressed')}>
@@ -57,9 +59,10 @@ export default function TabTwoScreen() {
         </TouchableOpacity>
       </ThemedView>
 
-      
-      <Item complete={true} progressValue={0.8}></Item>
-      <Item complete={false} progressValue={0.8} category='Low Risk' reading='90'></Item>
+
+
+      <Item complete={false} progressValue={0.8}/>
+      <Item complete={true} progressValue={0.8} category='low risk!' reading='80'/>
 
       
     </ParallaxScrollView>
@@ -80,19 +83,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 1,
   },
   hbContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     paddingBottom: 150,
-    paddingRight: 32,
   },
   connectButton: {
     backgroundColor: '#007AFF',
-    paddingVertical: 30,
-    paddingHorizontal: 40,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 12,
-    marginHorizontal: 10,
+    width: 150,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
@@ -145,10 +150,6 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     resizeMode: 'contain',
-  },
-  progressBar: {
-    width: null,
-    height: 6,
   },
   progressCircle: {
     justifyContent: 'center',
