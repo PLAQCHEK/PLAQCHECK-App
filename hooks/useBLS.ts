@@ -11,8 +11,9 @@ import {
   Characteristic,
   Device,
 } from "react-native-ble-plx";
+import { Float } from "react-native/Libraries/Types/CodegenTypes";
 
-const DATA_SERVICE_UUID = "00010000-ada2-4607-9d2f-71ec54c0cdf4";
+const DATA_SERVICE_UUID = "000D0000-ada2-4607-9d2f-71ec54c0cdf4";
 const START_CHARACTERISTIC_UUID = "00010004-ada2-4607-9d2f-71ec54c0cdf4";
 
 const bleManager = new BleManager();
@@ -21,6 +22,9 @@ function useBLE() {
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [color, setColor] = useState("white");
+  const [decodedListeningData, setDecodedListeningData] = useState<number | null>(null);
+  const [decodedReadStringData, setDecodedReadStringData] = useState<string | null>(null);
+  const [decodedReadFloatData, setDecodedReadFloatData] = useState<number | null>(null);
 
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
@@ -84,8 +88,8 @@ function useBLE() {
       setConnectedDevice(deviceConnection);
       await deviceConnection.discoverAllServicesAndCharacteristics();
       bleManager.stopDeviceScan();
+      console.log("connected to arduino BLE")
 
-      startStreamingData(deviceConnection);
     } catch (e) {
       console.log("FAILED TO CONNECT", e);
     }
@@ -124,32 +128,24 @@ function useBLE() {
       console.log("No Data was received");
       return;
     }
+     // Decode the value (Base64 encoded data)
+    const decodedValue = base64.decode(characteristic.value);
 
-    const colorCode = base64.decode(characteristic.value);
+    // Convert the decoded string to a byte array (Uint8Array)
+    const byteArray = new Uint8Array(decodedValue.split("").map((c: string) => c.charCodeAt(0)));
 
-    let color = "white";
-    if (colorCode === "B") {
-      color = "blue";
-    } else if (colorCode === "R") {
-      color = "red";
-    } else if (colorCode === "G") {
-      color = "green";
-    }
+    if (byteArray.length >= 2) {
+      // Assuming little-endian (least significant byte first)
+      const dataView = new DataView(byteArray.buffer);
+      
+      // Get the 16-bit unsigned integer (uint16_t) from the first two bytes
+      const uint16Value = dataView.getUint16(0, true);  // true for little-endian
 
-    setColor(color);
-  };
-
-  const startStreamingData = async (device: Device) => {
-    if (device) {
-      device.monitorCharacteristicForService(
-        DATA_SERVICE_UUID,
-        START_CHARACTERISTIC_UUID,
-        onDataUpdate
-      );
+      setDecodedListeningData(uint16Value);
     } else {
-      console.log("No Device Connected");
+      console.log('Data does not contain enough bytes for a uint16_t');
     }
-  };
+    };
 
   const disconnectFromDevice = () => {
     if(connectedDevice) {
@@ -166,20 +162,103 @@ function useBLE() {
       console.log('Device not connected');
       return;
     }
+    console.log("writing func was called")
 
     // Convert data to Base64
     const base64Data = base64.encode(data);
 
     try {
-      // Use writeCharacteristicWithoutResponseForService to send the data
-      await connectedDevice.writeCharacteristicWithoutResponseForService(
-        '00010000-ada2-4607-9d2f-71ec54c0cdf4',       // The UUID of the service
-        characteristicUUID, // The UUID of the characteristic
-        base64Data,         // The data encoded as Base64
+      await connectedDevice.writeCharacteristicWithResponseForService(
+        '00010000-ada2-4607-9d2f-71ec54c0cdf4',               // The UUID of the service
+        characteristicUUID,         // The UUID of the characteristic
+        base64Data                 // The data to write (Base64 encoded)
       );
       console.log('Data written successfully');
     } catch (error) {
       console.error('Error writing data:', error);
+    }
+  };
+
+  const monitorCharacteristic = async (
+    characteristicUUID: string,
+  ) => {
+    if (!connectedDevice) {
+      console.log('Device not connected');
+      return;
+    }
+
+    try {
+      await connectedDevice.monitorCharacteristicForService(
+        '00010000-ada2-4607-9d2f-71ec54c0cdf4',               // The UUID of the service
+        characteristicUUID,         // The UUID of the characteristic
+        onDataUpdate
+      );
+      console.log('Listening for data.');
+    } catch (error) {
+      console.error('Error listening for data:', error);
+    }
+  }
+
+  const readStringCharacteristic = async (characteristicUUID: string) => {
+    if (!connectedDevice) {
+      console.log('No device connected');
+      return;
+    }
+  
+    try {
+      const characteristic: Characteristic = await connectedDevice.readCharacteristicForService(
+        '00010000-ada2-4607-9d2f-71ec54c0cdf4',
+        characteristicUUID
+      );
+  
+      if (characteristic.value) {
+        // Check if the value appears to be a base64-encoded string (alphanumeric + +, /, =)
+        if (characteristic.value.match(/^[A-Za-z0-9+/=]+$/)) {
+          // It's a base64-encoded string, decode it
+          const decodedString = base64.decode(characteristic.value);
+          setDecodedReadStringData(decodedString); // Update string data in state
+          console.log('Decoded string:', decodedString);
+        } 
+        
+      } else {
+        console.log('No value in characteristic');
+      }
+    } catch (error) {
+      console.error('Error reading characteristic:', error);
+    }
+  };
+
+  const readFloatCharacteristic = async (characteristicUUID: string) => {
+    if (!connectedDevice) {
+      console.log('No device connected');
+      return;
+    }
+  
+    try {
+      const characteristic: Characteristic = await connectedDevice.readCharacteristicForService(
+        '00010000-ada2-4607-9d2f-71ec54c0cdf4',
+        characteristicUUID
+      );
+  
+      if (characteristic.value) {
+        // Check if the value appears to be a base64-encoded string (alphanumeric + +, /, =)
+        const rawData = new Uint8Array(characteristic.value.split('').map((c: string) => c.charCodeAt(0)));
+
+        // Ensure that the data length is 4 (since float32 is 4 bytes)
+        if (rawData.length === 8) {
+          const dataView = new DataView(rawData.buffer);
+          const doubleValue = dataView.getFloat64(0, true); // Assuming little-endian byte order
+          setDecodedReadFloatData(doubleValue); // Update the double data state
+          console.log('Decoded double:', doubleValue);
+        } else {
+          console.log('Unexpected data length for float: ', rawData.length);
+        }
+        
+      } else {
+        console.log('No value in characteristic');
+      }
+    } catch (error) {
+      console.error('Error reading characteristic:', error);
     }
   };
 
@@ -190,9 +269,14 @@ function useBLE() {
     color,
     requestPermissions,
     scanForPeripherals,
-    startStreamingData,
     disconnectFromDevice,
     writeToCharacteristic,
+    readStringCharacteristic,
+    readFloatCharacteristic,
+    monitorCharacteristic,
+    decodedListeningData,
+    decodedReadFloatData,
+    decodedReadStringData,
   };
 }
 

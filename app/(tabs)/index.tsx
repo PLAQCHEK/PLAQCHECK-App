@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Image, 
   StyleSheet, 
@@ -14,8 +14,13 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import * as Progress from 'react-native-progress'
 
 export default function HomeScreen() {
+  const START_CHARACTERISTIC_UUID = "00010004-ada2-4607-9d2f-71ec54c0cdf4";
+  const PROGRESS_UUID = "00010003-ada2-4607-9d2f-71ec54c0cdf4";
+  const STATUS_UUID = "00010002-ada2-4607-9d2f-71ec54c0cdf4";
+  const LPPLA2_UUID = "00010001-ada2-4607-9d2f-71ec54c0cdf4";
   const [showTips, setShowTips] = useState(false);
   const {
     allDevices,
@@ -25,7 +30,23 @@ export default function HomeScreen() {
     requestPermissions,
     scanForPeripherals,
     disconnectFromDevice,
+    writeToCharacteristic,
+    readStringCharacteristic,
+    readFloatCharacteristic,
+    monitorCharacteristic,
+    decodedListeningData,
+    decodedReadFloatData,
+    decodedReadStringData
   } = useBLE();
+
+  
+  const writeStartData = () => {
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'start')
+  };
+  const readData = () => {
+    readFloatCharacteristic(LPPLA2_UUID)
+    readStringCharacteristic(STATUS_UUID)
+  }
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   const scanForDevices = async () => {
@@ -35,14 +56,162 @@ export default function HomeScreen() {
     }
   };
 
-  const hideModal = () => {
-    setIsModalVisible(false);
-  };
-
   const openModal = async () => {
     scanForDevices();
     setIsModalVisible(true);
   };
+
+  const [isConnectBluetoothVisible, setConnectBluetoothVisible] = useState<boolean>(true);
+  const [isBaselineTestVisible, setIsBaselineTestVisible] = useState<boolean>(false);
+  const [isLoadingBaselineVisible, setIsLoadingBaselineVisible] = useState<boolean>(false);
+  const [isCompleteBaselineVisible, setIsCompleteBaselineVisible] = useState<boolean>(false);
+  const [isLoadingTestVisible, setIsLoadingTestVisible] = useState<boolean>(false);
+  const [isCompleteTestVisible, setIsCompleteTestVisible] = useState<boolean>(false);
+  const [isFinalTest, setIsFinalTest] = useState<boolean>(false);
+
+  const showBaselineTest = () => {
+    setIsModalVisible(false)
+    setConnectBluetoothVisible(false)
+    setIsBaselineTestVisible(true)
+  }
+
+  const startBaselineTest = () => {
+    writeStartData()
+    setIsLoadingBaselineVisible(true)
+    monitorCharacteristic(PROGRESS_UUID)
+  }
+
+  const startSampleTest = () => {
+    writeStartData()
+    setIsLoadingTestVisible(true)
+    monitorCharacteristic(PROGRESS_UUID)
+    setTimeout(() => {
+      setIsFinalTest(true);
+    }, 5000);
+  }
+
+  const disconnect = () => {
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'reset')
+    setConnectBluetoothVisible(true)
+    setIsBaselineTestVisible(false)
+    setIsLoadingBaselineVisible(false)
+    setIsCompleteBaselineVisible(false)
+    setIsLoadingBaselineVisible(false)
+    setIsCompleteBaselineVisible(false)
+    setTimeout(() => {
+      disconnectFromDevice();
+    }, 1000)
+
+  }
+
+  const connectBluetoothUI = () => {
+    return (
+      <ThemedView>
+        <ThemedView style={styles.titleContainer}>
+          <ThemedText type="title">Welcome!</ThemedText>
+          <HelloWave />
+
+        </ThemedView>
+
+        {/* Connect Button */}
+        <ThemedView style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.connectButton} onPress={connectedDevice ? disconnectFromDevice : openModal}>
+            <Text style={[styles.buttonText, connectedDevice ? styles.disconnectButtonText : styles.connectButtonText]}>{connectedDevice ? "Disconnect" : "Connect"}</Text>
+          </TouchableOpacity>
+          <DeviceModal
+            closeModal={showBaselineTest}
+            visible={isModalVisible}
+            connectToPeripheral={connectToDevice}
+            devices={allDevices}
+          />
+        </ThemedView>
+
+        {/* Help Button & Tooltip */}
+        <ThemedView style={styles.hbContainer}>
+          <View>
+            <TouchableOpacity 
+              style={styles.helpButton} 
+              onPress={() => setShowTips(!showTips)}
+            >
+              <Text style={styles.helpButtonText}>?</Text>
+            </TouchableOpacity>
+
+            {/* Tooltip Box */}
+            {showTips && (
+              <View style={styles.tooltip}>
+                <Text style={styles.tooltipText}>
+                  How to Connect to Immunosensor{'\n\n'}
+                  1️⃣ Open **Settings**{'\n'}
+                  2️⃣ Open **Bluetooth Devices**{'\n'}
+                  3️⃣ Select **Immunosensor** from the list{'\n'}
+                  4️⃣ Wait for confirmation message{'\n\n'}
+                  *Note: Steps may vary between iOS and Android*{'\n'}
+                  {/* You can add images here later if needed */}
+                </Text>
+              </View>
+            )}
+          </View>
+
+        </ThemedView>
+      </ThemedView>
+    )
+  }
+
+  const disconnectButton = () => {
+    return (
+      <TouchableOpacity style={styles.disconnectButton} onPress={() => disconnect()}>
+        <Text style={styles.buttonText}>Disconnect</Text>
+      </TouchableOpacity>  
+    )
+  }
+
+  const baselineTestUI = () => {
+    return (
+      <ThemedView style={styles.testButtonsContainer}>
+        <TouchableOpacity style={styles.startStopButtons} onPress={() => startBaselineTest()}>
+          <Text style={styles.buttonText}>Start Baseline</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.startStopButtons} onPress={() => startSampleTest()}>
+          <Text style={styles.buttonText}>Start Sample</Text>
+        </TouchableOpacity>        
+      </ThemedView>
+    )
+  }
+
+  const loading = (percent:number)=> {
+    return (
+      <ThemedView>
+        <Progress.Bar progress={percent/100} width={300} height={40} color={"green"}/>
+        <ThemedText type='defaultSemiBold'>Progress: {percent}%</ThemedText>
+      </ThemedView>
+    )
+  }
+
+  const testCompleteUI = (status:string,reading:number) => {
+    return (
+    <ThemedView>
+      <ThemedText>Test Complete!</ThemedText>
+      <ThemedText>Results Obtained from Test</ThemedText>
+      <ThemedText>Category: {status}</ThemedText>
+      <ThemedText>Reading: {reading.toFixed(2)} ng/mL of Lp-PLA2</ThemedText>
+    </ThemedView>
+    )};
+
+  useEffect(() => {
+    // Only set isCompleteBaselineVisible to true if it's not already true
+    if (decodedListeningData === 100 && !isCompleteBaselineVisible ) {
+      setIsCompleteBaselineVisible(true);
+    }
+  }, [decodedListeningData, isCompleteBaselineVisible]); // Dependency array
+
+  useEffect(() => {
+    // Only set isCompleteBaselineVisible to true if it's not already true
+    if (decodedListeningData === 100 && !isCompleteTestVisible && isFinalTest) {
+      setIsCompleteTestVisible(true);
+      readData();
+    }
+  }, [decodedListeningData, isCompleteBaselineVisible, isLoadingTestVisible, isFinalTest]); // Dependency array
 
   return (
     <ParallaxScrollView
@@ -54,50 +223,15 @@ export default function HomeScreen() {
         />
       }>
       
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
+      {isConnectBluetoothVisible ? connectBluetoothUI() : null}
+      {isBaselineTestVisible ? baselineTestUI() : null}
+      {isLoadingBaselineVisible && decodedListeningData ? loading(decodedListeningData) : null}
 
-      {/* Connect Button */}
-      <ThemedView style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.connectButton} onPress={connectedDevice ? disconnectFromDevice : openModal}>
-          <Text style={styles.buttonText}>{connectedDevice ? "Disconnect" : "Connect"}</Text>
-        </TouchableOpacity>
-        <DeviceModal
-          closeModal={hideModal}
-          visible={isModalVisible}
-          connectToPeripheral={connectToDevice}
-          devices={allDevices}
-        />
-      </ThemedView>
+      {isCompleteBaselineVisible && decodedReadFloatData ? <Text>Baseline test complete! Please do sample test next.</Text> : <Text>Please start the baseline test.</Text>}
+      
+      {decodedReadFloatData && decodedReadStringData ? testCompleteUI(decodedReadStringData,decodedReadFloatData) : null}
 
-      {/* Help Button & Tooltip */}
-      <ThemedView style={styles.hbContainer}>
-        <View>
-          <TouchableOpacity 
-            style={styles.helpButton} 
-            onPress={() => setShowTips(!showTips)}
-          >
-            <Text style={styles.helpButtonText}>?</Text>
-          </TouchableOpacity>
-
-          {/* Tooltip Box */}
-          {showTips && (
-            <View style={styles.tooltip}>
-              <Text style={styles.tooltipText}>
-                How to Connect to Immunosensor{'\n\n'}
-                1️⃣ Open **Settings**{'\n'}
-                2️⃣ Open **Bluetooth Devices**{'\n'}
-                3️⃣ Select **Immunosensor** from the list{'\n'}
-                4️⃣ Wait for confirmation message{'\n\n'}
-                *Note: Steps may vary between iOS and Android*{'\n'}
-                {/* You can add images here later if needed */}
-              </Text>
-            </View>
-          )}
-        </View>
-      </ThemedView>
+      {isConnectBluetoothVisible ? <Text></Text> : disconnectButton()}
       
     </ParallaxScrollView>
   );
@@ -115,6 +249,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center vertically
     marginTop: 16,
   },
+  testButtonsContainer: {
+    flexDirection: 'row', // Stack buttons horizontally
+    alignItems: 'center', // Center horizontally
+    justifyContent: 'center', // Center vertically
+    marginTop: 32,
+    paddingHorizontal: 1,
+  },
   hbContainer: {
     flexDirection: 'column',
     alignItems: 'center',
@@ -128,9 +269,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 100,
     borderRadius: 12,
   },
+  startStopButtons: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    width: 150,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disconnectButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    position: 'fixed',
+    bottom: -30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   buttonText: {
     color: '#fff',
     fontSize: 32,
+    fontWeight: 'bold',
+  },
+  connectButtonText: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  disconnectButtonText: {
+    color: '#fff',
+    fontSize: 28,
     fontWeight: 'bold',
   },
   helpButton: {
@@ -181,3 +352,5 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
+
+
