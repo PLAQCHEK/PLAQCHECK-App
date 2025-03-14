@@ -24,6 +24,7 @@ export default function HomeScreen() {
     color,
     requestPermissions,
     scanForPeripherals,
+    disconnectFromDevice,
   } = useBLE();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
@@ -60,8 +61,8 @@ export default function HomeScreen() {
 
       {/* Connect Button */}
       <ThemedView style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.connectButton} onPress={openModal}>
-          <Text style={styles.buttonText}>Connect</Text>
+        <TouchableOpacity style={styles.connectButton} onPress={connectedDevice ? disconnectFromDevice : openModal}>
+          <Text style={styles.buttonText}>{connectedDevice ? "Disconnect" : "Connect"}</Text>
         </TouchableOpacity>
         <DeviceModal
           closeModal={hideModal}

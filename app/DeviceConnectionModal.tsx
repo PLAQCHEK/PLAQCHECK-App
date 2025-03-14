@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Device } from "react-native-ble-plx";
 
+
 type DeviceModalListItemProps = {
   item: ListRenderItemInfo<Device>;
   connectToPeripheral: (device: Device) => void;

@@ -7,6 +7,9 @@ import {
   Text 
 } from 'react-native';
 
+import useBLE from '../../hooks/useBLS';
+import DeviceModal from "../DeviceConnectionModal";
+
 import * as Progress from 'react-native-progress'
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -34,10 +37,26 @@ function Item({complete=false,progressValue=0,category='',reading=''}) {
   }
 }
 
-
 export default function Results() {
-  const [showTips, setShowTips] = useState(false);
+  const START_CHARACTERISTIC_UUID = "00010004-ada2-4607-9d2f-71ec54c0cdf4";
+  const PROGRESS_UUID = "00010003-ada2-4607-9d2f-71ec54c0cdf4";
+  const STATUS_UUID = "00010002-ada2-4607-9d2f-71ec54c0cdf4";
+  const LPPLA2_UUID = "00010001-ada2-4607-9d2f-71ec54c0cdf4";
 
+  const [showTips, setShowTips] = useState(false);
+  const {
+    allDevices,
+    connectedDevice,
+    connectToDevice,
+    color,
+    requestPermissions,
+    scanForPeripherals,
+    writeToCharacteristic,
+  } = useBLE();
+  
+  const writeStartData = async () => {
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'start')
+  };
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#9fb0b5', dark: '#1D3D47' }}
@@ -50,7 +69,7 @@ export default function Results() {
       
       {/* Start Button */}
       <ThemedView style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.connectButton} onPress={() => console.log('Start button pressed')}>
+        <TouchableOpacity style={styles.connectButton} onPress={() => writeStartData}>
           <Text style={styles.buttonText}>Start</Text>
         </TouchableOpacity>
 

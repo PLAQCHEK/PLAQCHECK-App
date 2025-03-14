@@ -12,8 +12,8 @@ import {
   Device,
 } from "react-native-ble-plx";
 
-const DATA_SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214";
-const COLOR_CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1217";
+const DATA_SERVICE_UUID = "00010000-ada2-4607-9d2f-71ec54c0cdf4";
+const START_CHARACTERISTIC_UUID = "00010004-ada2-4607-9d2f-71ec54c0cdf4";
 
 const bleManager = new BleManager();
 
@@ -143,11 +143,43 @@ function useBLE() {
     if (device) {
       device.monitorCharacteristicForService(
         DATA_SERVICE_UUID,
-        COLOR_CHARACTERISTIC_UUID,
+        START_CHARACTERISTIC_UUID,
         onDataUpdate
       );
     } else {
       console.log("No Device Connected");
+    }
+  };
+
+  const disconnectFromDevice = () => {
+    if(connectedDevice) {
+      bleManager.cancelDeviceConnection(connectedDevice.id);
+      setConnectedDevice(null);
+    }
+  }
+
+  const writeToCharacteristic = async (
+    characteristicUUID: string,
+    data: string
+  ) => {
+    if (!connectedDevice) {
+      console.log('Device not connected');
+      return;
+    }
+
+    // Convert data to Base64
+    const base64Data = base64.encode(data);
+
+    try {
+      // Use writeCharacteristicWithoutResponseForService to send the data
+      await connectedDevice.writeCharacteristicWithoutResponseForService(
+        '00010000-ada2-4607-9d2f-71ec54c0cdf4',       // The UUID of the service
+        characteristicUUID, // The UUID of the characteristic
+        base64Data,         // The data encoded as Base64
+      );
+      console.log('Data written successfully');
+    } catch (error) {
+      console.error('Error writing data:', error);
     }
   };
 
@@ -159,6 +191,8 @@ function useBLE() {
     requestPermissions,
     scanForPeripherals,
     startStreamingData,
+    disconnectFromDevice,
+    writeToCharacteristic,
   };
 }
 
