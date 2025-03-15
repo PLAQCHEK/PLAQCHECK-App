@@ -39,9 +39,14 @@ export default function HomeScreen() {
     decodedReadStringData
   } = useBLE();
 
-  
   const writeStartData = () => {
     writeToCharacteristic(START_CHARACTERISTIC_UUID,'start')
+  };
+  const writeResetData = () => {
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'reset')
+  };
+  const writeHardResetData = () => {
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'hard')
   };
   const readData = () => {
     readFloatCharacteristic(LPPLA2_UUID)
@@ -68,6 +73,7 @@ export default function HomeScreen() {
   const [isLoadingTestVisible, setIsLoadingTestVisible] = useState<boolean>(false);
   const [isCompleteTestVisible, setIsCompleteTestVisible] = useState<boolean>(false);
   const [isFinalTest, setIsFinalTest] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
 
   const showBaselineTest = () => {
     setIsModalVisible(false)
@@ -90,8 +96,34 @@ export default function HomeScreen() {
     }, 5000);
   }
 
+  const softReset = () => {
+    setIsLoadingBaselineVisible(false)
+    setIsCompleteBaselineVisible(false)
+    setIsLoadingTestVisible(false)
+    setShowResults(false)
+    setIsFinalTest(false)
+    setIsCompleteTestVisible(false)
+    setTimeout(() => {
+      writeResetData()
+    }, 1000)
+  }
+
+  const hardReset = () => {
+    setIsLoadingBaselineVisible(false)
+    setIsCompleteBaselineVisible(false)
+    setIsCompleteBaselineVisible(false)
+    setIsLoadingTestVisible(false)
+    setShowResults(false)
+    setIsFinalTest(false)
+    setIsCompleteTestVisible(false)
+    setTimeout(() => {
+      writeHardResetData()
+    }, 1000)
+    
+  }
+
   const disconnect = () => {
-    writeToCharacteristic(START_CHARACTERISTIC_UUID,'reset')
+    writeToCharacteristic(START_CHARACTERISTIC_UUID,'hard')
     setConnectBluetoothVisible(true)
     setIsBaselineTestVisible(false)
     setIsLoadingBaselineVisible(false)
@@ -188,6 +220,20 @@ export default function HomeScreen() {
     )
   }
 
+  const resetUI = () => {
+    return (
+      <ThemedView style={styles.testButtonsContainer}>
+        <TouchableOpacity style={styles.startStopButtons} onPress={() => softReset()}>
+          <Text style={styles.buttonText}>Soft Reset</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.startStopButtons} onPress={() => hardReset()}>
+          <Text style={styles.buttonText}>Hard Reset</Text>
+        </TouchableOpacity>        
+      </ThemedView>
+    )
+  }
+
   const testCompleteUI = (status:string,reading:number) => {
     return (
     <ThemedView>
@@ -209,6 +255,7 @@ export default function HomeScreen() {
     // Only set isCompleteBaselineVisible to true if it's not already true
     if (decodedListeningData === 100 && !isCompleteTestVisible && isFinalTest) {
       setIsCompleteTestVisible(true);
+      setShowResults(true)
       readData();
     }
   }, [decodedListeningData, isCompleteBaselineVisible, isLoadingTestVisible, isFinalTest]); // Dependency array
@@ -218,19 +265,18 @@ export default function HomeScreen() {
       headerBackgroundColor={{ light: '#9fb0b5', dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={require('@/assets/images/justlogo.png')}
+          source={require('@/assets/images/PLAQCHEK-app-icon.png')}
           style={styles.reactLogo}
         />
       }>
       
       {isConnectBluetoothVisible ? connectBluetoothUI() : null}
       {isBaselineTestVisible ? baselineTestUI() : null}
-      {isLoadingBaselineVisible && decodedListeningData ? loading(decodedListeningData) : null}
+      {(isLoadingBaselineVisible || isLoadingTestVisible) && decodedListeningData ? loading(decodedListeningData) : null}
 
-      {isCompleteBaselineVisible && decodedReadFloatData ? <Text>Baseline test complete! Please do sample test next.</Text> : <Text>Please start the baseline test.</Text>}
-      
-      {decodedReadFloatData && decodedReadStringData ? testCompleteUI(decodedReadStringData,decodedReadFloatData) : null}
+      {decodedReadFloatData && decodedReadStringData && showResults ? testCompleteUI(decodedReadStringData,decodedReadFloatData) : null}
 
+      {!isConnectBluetoothVisible && isBaselineTestVisible ? resetUI(): null}
       {isConnectBluetoothVisible ? <Text></Text> : disconnectButton()}
       
     </ParallaxScrollView>
