@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "PLAQCHECK",
-    "slug": "PLAQCHECK",
+    "slug": "PLAQCHEK",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/PLAQCHECK-app-icon.png",
+    "icon": "./assets/images/PLAQCHEK-app-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,7 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.PLAQCHECK"
+      "package": "com.anonymous.PLAQCHEK"
     },
     "web": {
       "bundler": "metro",
@@ -49,10 +49,8 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "8b42c1bb-f868-40ff-8601-a8eb99a1bb66"
       }
+
     }
   }
 }

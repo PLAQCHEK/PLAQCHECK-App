@@ -140,6 +140,7 @@ function useBLE() {
       
       // Get the 16-bit unsigned integer (uint16_t) from the first two bytes
       const uint16Value = dataView.getUint16(0, true);  // true for little-endian
+      console.log(uint16Value)
 
       setDecodedListeningData(uint16Value);
     } else {
@@ -241,19 +242,28 @@ function useBLE() {
       );
   
       if (characteristic.value) {
-        // Check if the value appears to be a base64-encoded string (alphanumeric + +, /, =)
-        const rawData = new Uint8Array(characteristic.value.split('').map((c: string) => c.charCodeAt(0)));
-
-        // Ensure that the data length is 4 (since float32 is 4 bytes)
-        if (rawData.length === 8) {
-          const dataView = new DataView(rawData.buffer);
-          const doubleValue = dataView.getFloat64(0, true); // Assuming little-endian byte order
-          setDecodedReadFloatData(doubleValue); // Update the double data state
-          console.log('Decoded double:', doubleValue);
-        } else {
-          console.log('Unexpected data length for float: ', rawData.length);
-        }
-        
+        // Decode the Base64 string into a byte array
+        const base64String = characteristic.value; // e.g. 'pNCTQw=='
+        const rawData = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+  
+        console.log("Decoded Raw Data (before reversing):", rawData); // Log the raw byte array before reversing
+  
+        // Reverse the byte order to match big-endian format (in case of little-endian format in the raw data)
+        const reversedData = rawData.slice().reverse();
+  
+        console.log("Reversed Data:", reversedData); // Log the reversed byte array
+  
+        // Check the hex representation of the reversed data
+        console.log("Hex of Reversed Data:", Array.from(reversedData).map(byte => byte.toString(16).padStart(2, '0')).join(' '));
+  
+        // Convert the byte array (now in big-endian order) to a 32-bit float using DataView
+        const buffer = reversedData.buffer;
+        const dataView = new DataView(buffer);
+  
+        // Read the 32-bit float (big-endian)
+        const floatValue = dataView.getFloat32(0, false); // false for big-endian
+        console.log('Decoded Float Value:', floatValue);
+        setDecodedReadFloatData(floatValue)
       } else {
         console.log('No value in characteristic');
       }
@@ -261,7 +271,7 @@ function useBLE() {
       console.error('Error reading characteristic:', error);
     }
   };
-
+  
   return {
     connectToDevice,
     allDevices,

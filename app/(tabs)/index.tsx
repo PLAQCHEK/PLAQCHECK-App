@@ -123,13 +123,14 @@ export default function HomeScreen() {
   }
 
   const disconnect = () => {
-    writeToCharacteristic(START_CHARACTERISTIC_UUID,'hard')
     setConnectBluetoothVisible(true)
     setIsBaselineTestVisible(false)
     setIsLoadingBaselineVisible(false)
     setIsCompleteBaselineVisible(false)
     setIsLoadingBaselineVisible(false)
     setIsCompleteBaselineVisible(false)
+    setShowResults(false)
+    setIsLoadingTestVisible(false)
     setTimeout(() => {
       disconnectFromDevice();
     }, 1000)
@@ -173,11 +174,9 @@ export default function HomeScreen() {
               <View style={styles.tooltip}>
                 <Text style={styles.tooltipText}>
                   How to Connect to Immunosensor{'\n\n'}
-                  1️⃣ Open **Settings**{'\n'}
-                  2️⃣ Open **Bluetooth Devices**{'\n'}
-                  3️⃣ Select **Immunosensor** from the list{'\n'}
-                  4️⃣ Wait for confirmation message{'\n\n'}
-                  *Note: Steps may vary between iOS and Android*{'\n'}
+                  1️⃣ Make sure Bluetooth is enabled on your device{'\n'}
+                  2️⃣ Press the "Connect" button {'\n'}
+                  3️⃣ Select "PLAQCHEK" from the listed devices{'\n'}
                   {/* You can add images here later if needed */}
                 </Text>
               </View>
@@ -213,7 +212,7 @@ export default function HomeScreen() {
 
   const loading = (percent:number)=> {
     return (
-      <ThemedView>
+      <ThemedView style={styles.loadingBar}>
         <Progress.Bar progress={percent/100} width={300} height={40} color={"green"}/>
         <ThemedText type='defaultSemiBold'>Progress: {percent}%</ThemedText>
       </ThemedView>
@@ -223,11 +222,11 @@ export default function HomeScreen() {
   const resetUI = () => {
     return (
       <ThemedView style={styles.testButtonsContainer}>
-        <TouchableOpacity style={styles.startStopButtons} onPress={() => softReset()}>
+        <TouchableOpacity style={styles.resetButtons} onPress={() => softReset()}>
           <Text style={styles.buttonText}>Soft Reset</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.startStopButtons} onPress={() => hardReset()}>
+        <TouchableOpacity style={styles.resetButtons} onPress={() => hardReset()}>
           <Text style={styles.buttonText}>Hard Reset</Text>
         </TouchableOpacity>        
       </ThemedView>
@@ -246,17 +245,21 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // Only set isCompleteBaselineVisible to true if it's not already true
-    if (decodedListeningData === 100 && !isCompleteBaselineVisible ) {
-      setIsCompleteBaselineVisible(true);
+    if (decodedListeningData === 99 && !isCompleteBaselineVisible ) {
+      setTimeout(() => {
+        setIsCompleteBaselineVisible(true);
+      }, 2000)
     }
   }, [decodedListeningData, isCompleteBaselineVisible]); // Dependency array
 
   useEffect(() => {
     // Only set isCompleteBaselineVisible to true if it's not already true
-    if (decodedListeningData === 100 && !isCompleteTestVisible && isFinalTest) {
-      setIsCompleteTestVisible(true);
-      setShowResults(true)
-      readData();
+    if (decodedListeningData === 99 && !isCompleteTestVisible && isFinalTest) {
+      setTimeout(() => {
+        setIsCompleteTestVisible(true);
+        setShowResults(true)
+        readData();
+      }, 2000)
     }
   }, [decodedListeningData, isCompleteBaselineVisible, isLoadingTestVisible, isFinalTest]); // Dependency array
 
@@ -301,6 +304,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center vertically
     marginTop: 32,
     paddingHorizontal: 1,
+    gap: 30,
   },
   hbContainer: {
     flexDirection: 'column',
@@ -325,8 +329,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  resetButtons: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    width: 150,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   disconnectButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF0000',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 12,
@@ -397,6 +411,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     resizeMode: 'contain',
   },
+  loadingBar: {
+    flex:1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
 });
-
-
