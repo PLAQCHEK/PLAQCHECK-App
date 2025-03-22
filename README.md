@@ -4,24 +4,24 @@ Novel app to revolutionize the Medical World!
 
 This mobile app can be used to interact with the PLAQCHEK device, to obtain the user's cardiovascular disease risk assessment.
 
-Once the app is installed, open it and press the "Connect" button to begin connecting the app to the PLAQCHEK device. Then, allow the app to access connect to nearby devices, and the device's location. Once the permissions are given, select the PLAQCHEK device from the list of devices to connect. The app should now be connected to the PLAQCHEK device, and a bluetooth symbol on the device should now appear if the blueooth connection was successful. The question mark icon on the home be clicked for a reminder of these instructions.
+Once the app is installed, open it and press the "Connect" button to begin connecting the app to the PLAQCHEK device. Then, allow the app to access connect to nearby devices, and the device's location. Once the permissions are given, select the PLAQCHEK device from the list of devices to connect. The app should now be connected to the PLAQCHEK device, and a bluetooth symbol on the device should now appear if the blueooth connection was successful. The question mark icon on the home screen can be clicked for a reminder of these instructions.
 
-![](https://github.com/PLAQCHEK/PLAQCHECK-App/tree/dev-mode-testing/assets/gifs/PLAQCHEK-Bluetooth_Connectivity.gif)
+![](https://github.com/PLAQCHEK/PLAQCHECK-App/blob/main/assets/gifs/PLAQCHEK-Bluetooth_Connectivity.gif)
 
 
 Prior to adding a blood sample, press the "Start Baseline" button to obtain a baseline light level. A loading bar should appear on the device indicating the progress of the test, which also appears on the app.
 
-![](https://github.com/PLAQCHEK/PLAQCHECK-App/tree/dev-mode-testing/assets/gifs/PLAQCHEK-Start_Baseline.gif)
+![](https://github.com/PLAQCHEK/PLAQCHECK-App/blob/main/assets/gifs/PLAQCHEK-Start_Baseline.gif)
 
 
 Once the baseline light level has finished, the progress bar will reach 100%. Then the device will indicate you can start the reference test; add a blood sample to the device then press the "Start Sample" button on the app. Another loading bar should appear on the device indicating the progress of this 2nd test, which also appears on the app.
 
-![](https://github.com/PLAQCHEK/PLAQCHECK-App/tree/dev-mode-testing/assets/gifs/PLAQCHEK-Sample_Test.gif)
+![](https://github.com/PLAQCHEK/PLAQCHECK-App/blob/main/assets/gifs/PLAQCHEK-Sample_Test.gif)
 
 
 Once the reference test has been completed, the device and app will display the user's risk categorization for cardiovascular disease and a reading of the concentration of Lp-PLA2 present in the blood sample provided. The user can then decide to hard reset the device which will allow the user to start the baseline and sample tests again, soft reset the device will keep the baseline light level tests conducted and just allow the user to take the sample test again, or disconnect their bluetooth connection from their device to the PLAQCHEK device.
 
-![](https://github.com/PLAQCHEK/PLAQCHECK-App/tree/dev-mode-testing/assets/gifs/PLAQCHEK-Results.gif)
+![](https://github.com/PLAQCHEK/PLAQCHECK-App/blob/main/assets/gifs/PLAQCHEK-Results.gif)
 
 Supported Platforms:
 - Android Development
